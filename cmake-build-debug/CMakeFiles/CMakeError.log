@@ -1,0 +1,38 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/tanguy/CLionProjects/Networking/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/home/tanguy/Bureau/IntelliJSofwares/CLion/clion-2021.3.4/bin/ninja/linux/ninja cmTC_3cdf2 && [1/2] Building C object CMakeFiles/cmTC_3cdf2.dir/src.c.o
+[2/2] Linking C executable cmTC_3cdf2
+FAILED: cmTC_3cdf2 
+: && /usr/bin/cc   CMakeFiles/cmTC_3cdf2.dir/src.c.o -o cmTC_3cdf2   && :
+CMakeFiles/cmTC_3cdf2.dir/src.c.o : Dans la fonction « main » :
+src.c:(.text+0x3e) : référence indéfinie vers « pthread_create »
+src.c:(.text+0x4a) : référence indéfinie vers « pthread_detach »
+src.c:(.text+0x56) : référence indéfinie vers « pthread_cancel »
+src.c:(.text+0x67) : référence indéfinie vers « pthread_join »
+src.c:(.text+0x7b) : référence indéfinie vers « pthread_atfork »
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
