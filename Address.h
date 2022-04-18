@@ -1,7 +1,7 @@
 //
 // Created by tanguy on 29/03/22.
 //
-#include <netinet/in.h>
+#include "Socket.h"
 #include "iostream"
 #ifndef NETWORKING_ADDRESS_H
 #define NETWORKING_ADDRESS_H

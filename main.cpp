@@ -6,77 +6,147 @@
 #include "string.h"
 #include "thread"
 
-#include <sys/ioctl.h> // For FIONREAD
-#include <termios.h>
+
 #include <stdbool.h>
 #include <thread>
-//#define GLFW_INCLUDE_NONE
-#include "glad.h"
+#include "future"
+#include <gl/GL.h>
+#include "glm/glm.hpp"
+
+#define GLFW_INCLUDE_NONE
+//#include "glad.h"
 #include "Window.h"
+#include "net_client.h"
+//#include "gl/GL.h"
 //#include "glad.h"
 
-static const struct
-{
-    float x, y;
-    float r, g, b;
-} vertices[3] =
-        {
-                { -0.6f, -0.4f, 1.f, 0.f, 0.f },
-                {  0.6f, -0.4f, 0.f, 1.f, 0.f },
-                {   0.f,  0.6f, 0.f, 0.f, 1.f }
-        };
 
-static const char* vertex_shader_text =
-        "#version 110\n"
-        "uniform mat4 MVP;\n"
-        "attribute vec3 vCol;\n"
-        "attribute vec2 vPos;\n"
-        "varying vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-        "    color = vCol;\n"
-        "}\n";
+/*class CustomClient : public net::client_interface<net::CustomMsgTypes>{
+public:
+    void FireBullet(glm::vec3 dir){
+        net::message<net::CustomMsgTypes> msg;
+        msg.header.id = net::CustomMsgTypes::MovePlayer;
+        msg << dir;
+    }
+};*/
 
-static const char* fragment_shader_text =
-        "#version 110\n"
-        "varying vec3 color;\n"
-        "void main()\n"
-        "{\n"
-        "    gl_FragColor = vec4(color, 1.0);\n"
-        "}\n";
+/*enum class CustomMsgTypes : uint32_t {
+    MovePlayer,
+    FireBullet
+};*/
 
-void teestt(){
+class CustomServer : public net::server_interface<CustomMsgTypes>{
+public:
+/*    void PingServer(){
+        net::message<CustomMsgTypes> msg;
+        msg.header.id = CustomMsgTypes::ServerPing;
 
+        std::chrono::system_clock::time_point timeNow = std::chrono::system_clock::now();
+
+        msg << timeNow;
+        Send(msg);
+    }*/
+};
+
+class CustomClient : public net::client_interface<CustomMsgTypes>{
+public:
+    void PingServer(){
+        net::message<CustomMsgTypes> msg;
+        msg.header.id = CustomMsgTypes::ServerPing;
+
+        std::chrono::system_clock::time_point timeNow = std::chrono::system_clock::now();
+
+        msg << timeNow << timeNow;
+        Send(msg);
+    }
+};
+
+Network network;
+bool isServer = false;
+void runBackground(){
+/*    CustomServer cServer;
+    CustomClient cClient;*/
+
+    network.init();
+    if(isServer){
+
+        //net::server_interface<net::CustomMsgTypes> test(reinterpret_cast<sockaddr_in &>(addr));
+        network.runServer();
+    }
+    else{
+        network.runClient();
+    }
+    return;
+/*    if(isServer){
+        struct sockaddr_in* addr{};
+        CustomServer cServer;
+        cServer.Start();
+        //net::server_interface<net::CustomMsgTypes> test(reinterpret_cast<sockaddr_in &>(addr));
+        //network.runServer(cServer);
+    }
+    else{
+        struct sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = INADDR_ANY*//*ntohl(addr.address)*//*;
+        addr.sin_port = htons( (unsigned short) PORT );
+
+        CustomClient cClient;
+        cClient.Connect(addr);
+        cClient.PingServer();
+        //network.runClient();
+    }*/
 }
 
-bool isServer = false;
 int main(int argc, char *argv[]){
-    Window window(640, 480, "Test Window :)");
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-    GLint mvp_location, vpos_location, vcol_location;
 
-    Network network;
+/*    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+    GLint mvp_location, vpos_location, vcol_location;*/
+
 
     //std::thread NEW(teestt);
     //NEW.join();
 
-    std::cout << argc << std::endl;
+/*    char* testBuff = new char[1024];
+
+    const char *LOLTEXT = "1234TESTSTRING";
+    int writeL = strnlen(LOLTEXT, 1024);
+    for(int w = 0; w < writeL; w++){
+        testBuff[w + 10] << LOLTEXT[w];
+    }
+
+    testBuff |= "test";*/
+/*    testBuff[0] = 'a';
+    testBuff[1] = 'b';*/
+
+    uint32_t testS = 69;
+    //strncpy_s(testBuff, , sizeof (testBuff) - 1);
+    //std::cout << testBuff << std::endl;
+    //testBuff << (char*)testS;
+    //testBuff << (char*)testS;
+
+    uint8_t packet_data[32];
+    memset( packet_data, 0, sizeof( packet_data ) );
+
+
+    char* title = "Client";
     //network.init();
     for(int i = 0; i < argc; i++){
         if(strcmp(argv[i], "-server") == 0) {
             isServer = true;
+            title = "Server";
         }
     }
+    std::thread newThreadLOL(runBackground);
 
-    glfwMakeContextCurrent(window.window);
-    gladLoadGL();
-    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+
+    /*    int res = gladLoadGL();
+    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);*/
 /*    program = glCreateProgram();
     glLinkProgram(program);*/
 
     //gladLoadGL();
-    glfwSwapInterval(1);
+    //glfwSwapInterval(1);
 
 
     /*glGenBuffers(1, &vertex_buffer);
@@ -108,22 +178,43 @@ int main(int argc, char *argv[]){
                           sizeof(vertices[0]), (void*) (sizeof(float) * 2));*/
 
 
+/*    GLFWwindow* window;
+    glfwInit();
+    window = glfwCreateWindow(640, 480, "AHAHAHA", NULL, NULL);*/
+
+    Window window(640, 480, title);
+    glfwMakeContextCurrent(window.getGLFWWindow());
+    //glfwMakeContextCurrent(window);
+
+    int fPressed = false;
     while(!window.ShouldClose())
+    //while(!glfwWindowShouldClose(window))
     {
-        int width, height;
-        glfwGetFramebufferSize(window.window, &width, &height);
+
+        if(glfwGetKey(window.window, GLFW_KEY_F) == GLFW_PRESS)
+            fPressed = true;
+        if(glfwGetKey(window.window, GLFW_KEY_F) == GLFW_RELEASE && fPressed){
+
+            std::cout << network.sendTestData << std::endl;
+            network.sendTestData = !network.sendTestData;
+            fPressed = false;
+        }
         //
-        glad_glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
+        //glad_glViewport(0, 0, width, height);
+        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+
+        glBegin(GL_TRIANGLES);
+        glVertex2d(-0.5f, -0.5f);
+        glVertex2d(0.0f, 0.5f);
+        glVertex2d(0.5, -0.5f);
+        glEnd();
 
         glfwSwapBuffers(window.window);
+        //glfwSwapBuffers(window);
+
         glfwPollEvents();
     }
 
     glfwTerminate();
-/*    if(isServer)
-        network.runServer();
-    else
-        network.runClient();*/
     exit(EXIT_SUCCESS);
 }

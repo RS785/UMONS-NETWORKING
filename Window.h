@@ -13,7 +13,7 @@ public:
     GLFWwindow *window;
     GLFWwindow* getGLFWWindow() const { return window; }
 
-    bool ShouldClose() { return glfwWindowShouldClose(window); }
+    bool ShouldClose() const { return glfwWindowShouldClose(window); }
 
 private:
 

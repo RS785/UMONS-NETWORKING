@@ -5,6 +5,7 @@
 #ifndef NETWORKING_PLAYERCLASS_H
 #define NETWORKING_PLAYERCLASS_H
 
+#include "glm/glm.hpp"
 #include "../libs/json.hpp"
 #include "Utils.h"
 
@@ -18,6 +19,14 @@ public:
     friend void to_json(json& j, const std::vector<PlayerClass>& value);
     friend void from_json(const json& j, std::vector<PlayerClass>& value);
 
+
+    struct sPlayerDescription{
+        uint32_t nUniqueID = 0;
+        uint32_t nHealth = 100;
+
+        glm::vec3 vPos;
+        glm::vec3 vVel;
+    };
 /*
 private:
 */

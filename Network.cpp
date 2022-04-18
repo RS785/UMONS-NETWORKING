@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include <fstream>
 #include "Network.h"
 #include "cassert"
@@ -13,13 +12,22 @@
 #include "libs/json.hpp"
 #include "Utils/PlayerClass.h"
 #include "Utils/DataType.h"
+#include "glm/glm.hpp"
 #include "thread"
+#include "Utils/PlayerClass.h"
+
+
+#if PLATFORM == PLATFORM_WINDOWS
+#pragma comment( lib, "wsock32.lib" )
+#endif
 
 // Windows related stuff
-bool InitializeSockets(){
+bool Network::InitializeSockets(){
 #if PLATFORM == PLATFORM_WINDOWS
     WSADATA WsaData;
-    // TODO: Windows support (not yet)
+    return WSAStartup( MAKEWORD(2,2),
+                       &WsaData )
+                       == NO_ERROR;
 #else
     return true;
 #endif
@@ -28,8 +36,9 @@ bool InitializeSockets(){
 void Network::ShutdownSockets(){
 #if PLATFORM == PLATFORM_WINDOWS
     WSACleanup();
-#endif
+#elif
     close(handle);
+#endif
 }
 
 /*class Address{
@@ -62,7 +71,6 @@ public:
     }
 };*/
 
-
 bool yPressed = false;
 
 /// TODO: Serialization, and deserialization on server-side.
@@ -75,18 +83,52 @@ public:
 
 
 double t = 0.0;
-double dt = 1.0 / PACKET_SEND_FREQ; // 30Hz send frequency
+double dt = 1.0 / (double)PACKET_SEND_FREQ; // 30Hz send frequency
 
 
 void foo(){
     std::cout << "HELLO FROM THREAD" << std::endl;
 }
+
+std::unordered_map<uint32_t, PlayerClass::sPlayerDescription> mapObjects;
+uint32_t nPlayerID = 0;
+
+
+std::vector<PlayerClass> players{};
 // Self-explanatory
 void Network::init() {
-    if((handle = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+
+    players.push_back(PlayerClass("test", {0, 1}));
+    InitializeSockets();
+    if((handle = socket(AF_INET, SOCK_DGRAM, 0)) <= 0){
         perror("Couldn't create socket!");
         exit(EXIT_FAILURE);
     }
+
+    //net::message<CustomMsgTypes> msg;
+    //msg.header.id = CustomMsgTypes::FireBullet;
+
+    int a = 69;
+    bool b = false;
+    float c = 420.69f;
+
+    glm::vec2 d[24] {};
+/*    struct {
+        float x = 10;
+        float y = 11;
+    } d[3];*/
+
+    //msg << a << b << c << d;
+
+    a = 0;
+    b = true;
+    c = 0.69;
+    //d = {0, 0};
+
+/*
+    std::deque<T>
+*/
+    //msg >> d >> c >> b >> a;
 
     //std::thread testThread(foo);
 
@@ -134,8 +176,9 @@ void Network::init() {
 
     // Setup IP
     serveraddr.sin_family = AF_INET;
-    serveraddr.sin_addr.s_addr = ntohl(serverAddress.address);
-    serveraddr.sin_port = htons(PORT);
+    serveraddr.sin_addr.s_addr = /*INADDR_ANY*/ntohl(serverAddress.address);
+    serveraddr.sin_port = htons( (unsigned short) PORT );
+    //serveraddr.sin_port = htons(PORT);
 
     #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
         int nonBlocking = 1;
@@ -145,16 +188,19 @@ void Network::init() {
             exit(EXIT_FAILURE);
         }
     #elif PLATFORM == PLATFORM_WINDOWS
-            DWORD nonBlocking = 1;
-                if ( ioctlsocket( handle, FIONBIO, &nonBlocking ) != 0 )
-                {
-                    printf( "failed to set non-blocking\n" );
-                    return false;
-                }
+
+        DWORD nonBlocking = 1;
+        if ( ioctlsocket( handle,
+                          FIONBIO,
+                          &nonBlocking ) != 0 )
+        {
+            printf( "failed to set non-blocking\n" );
+            exit(EXIT_FAILURE);
+        }
 
     #endif
 
-    FD_ZERO(&m_master);
+    //FD_ZERO(&m_master);
 }
 
 // FIXME: Redo that somewhere else: huge refactor incoming...
@@ -168,13 +214,13 @@ int Network::findFreeSlot(){
     return -1;
 }
 
-std::vector<PlayerClass> players{};
 [[noreturn]] void Network::runServer() {
-    FD_SET(handle, &m_master);
+    //players.push_back(PlayerClass("TestPlayer1", {1, 2}));
+    //FD_SET(handle, &m_master);
 
-    players.push_back(PlayerClass{"Player0", vec2f{0, 0}});
+    //players.push_back(PlayerClass{"Player0", vec2f{0, 0}});
 
-    if (bind(handle, (const struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
+    if (bind(handle, (const sockaddr *)&serveraddr, sizeof(sockaddr_in)) < 0)
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
@@ -182,7 +228,7 @@ std::vector<PlayerClass> players{};
 
     Address saddr = Address(serveraddr);
     char *buff[256];
-    std::cout << "SERVER RUNNING ON: " << ntohs(saddr.clientAddr.sin_port) << std::endl;
+    std::cout << "SERVER RUNNING ON 127.0.0.1:" << ntohs(saddr.clientAddr.sin_port) << '\n';
 
     // TODO: SEMI-FIXED TIMESTEP FOR BOTH CLIENT AND SERVER.
     auto currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() / 1000.0;
@@ -194,7 +240,7 @@ std::vector<PlayerClass> players{};
         currentTime = time;
 
         while(frameTime > 0.0){
-            float deltaTime = std::min(frameTime, dt);
+            float deltaTime = glm::min(frameTime, dt);
     /*        fd_set c = m_master;
             int socketCount = select(0, &c, nullptr, nullptr, reinterpret_cast<timeval *>(1000));
 
@@ -230,7 +276,7 @@ std::vector<PlayerClass> players{};
 
             // (n) = number of bytes read
             n = recvfrom(handle, (char *)buffer, MAXLINE, 0, ( struct sockaddr *) &claddr,
-                         reinterpret_cast<socklen_t *>(&len));
+                         reinterpret_cast<int *>(&len));
 
 
             Address current = Address(claddr);
@@ -277,9 +323,12 @@ std::vector<PlayerClass> players{};
             //std::cout << "BEFORE SEND: " << to_string(DataType::PlayerClassToJSON(&players, j)).c_str() << std::endl;
             //std::cout << "DQSDS:" << buf << std::endl;
 
-            players[0].position.y = std::abs(std::sin(3.1415 * t));
-            //std::cout << players[0].position.y << std::endl;
-            broadcastToClients(to_string(DataType::PlayerClassToJSON(&players)).c_str(), 0);
+            if(sendTestData){
+
+                players[0].position.y = std::abs(std::sin(3.1415 * t));
+                //std::cout << players[0].position.y << std::endl;
+                broadcastToClients(to_string(DataType::PlayerClassToJSON(&players)).c_str(), 0);
+            }
 
             frameTime -= deltaTime;
             t += deltaTime;
@@ -287,12 +336,17 @@ std::vector<PlayerClass> players{};
         }
 
     }
+    ShutdownSockets();
 }
 
 //std::vector<char*> text = {"First handshake test", "Second request", "Third thing?", "Fourth test it's the end", "Five", "666", "7"};
 std::vector<char*> text = {"First piece of text", "Second piece of text", "Third piece of text", "Fourth piece of text", "Fifth piece of text"};
-void Network::runClient() {
+
+[[noreturn]] void Network::runClient() {
     memset(&serveraddr, 0, sizeof(serveraddr));
+
+    // Create player with id 0 ahah
+    //mapObjects[0] = PlayerClass::sPlayerDescription{0, 69, {0, 0, 0}, {0, 0, 0}};
 
 
     Address server = Address(127, 0, 0, 1, PORT);
@@ -305,7 +359,7 @@ void Network::runClient() {
 
 
     char textBuffer[256];
-    std::cout << "QUERYING SERVER: " << reqServer.ToString(textBuffer, 256) << ":" << ntohs(serveraddr.sin_port) << std::endl;
+    std::cout << "QUERYING SERVER: " << reqServer.ToString(textBuffer, 256)  << std::endl;
 
     PlayerClass plr{"test player", vec2f{1, 2}};
     plr.position = vec2f(1, 2);
@@ -324,8 +378,11 @@ void Network::runClient() {
     std::vector<PlayerClass> listOP{};
     listOP.push_back(plr);
 
-/*    json jimp = json::parse(,listOP);
+/*    json jimp = json::parse(listOP);
     std::vector<PlayerClass> players = jimp.get<std::vector<PlayerClass>>();*/
+
+    // UNUSED...
+    double timeSinceLastPacket = 0.0;
 
     //std::cout << jimp << std::endl;
     std::chrono::high_resolution_clock::time_point test = std::chrono::high_resolution_clock::now();
@@ -340,7 +397,10 @@ void Network::runClient() {
         currentTime = time;
 
         while(frameTime > 0.0){
-            float deltaTime = std::min(frameTime, dt);
+            float deltaTime = glm::min(frameTime, dt);
+
+            sockaddr_in from{};
+            int fromLength = sizeof( from );
 
             char *message = text.at(paramTries);
             //std::cout << (connect(handle, (sockaddr*)&serveraddr, sizeof(serveraddr))) << std::endl;
@@ -349,21 +409,22 @@ void Network::runClient() {
                    0, (const struct sockaddr *) &serveraddr,
                    sizeof(serveraddr));
 
+            int fromServer = sizeof(serveraddr);
             n = recvfrom(handle, (char *)buffer, MAXLINE,
                          0, (struct sockaddr *) &serveraddr,
-                         reinterpret_cast<socklen_t *>(&len));
-
+                                 &fromServer);
 
             buffer[n] = '\0';
+            // Incoming message!!
             if(n != -1)
             {
+
+                t = 0.0;
                 //std::cout << buffer << std::endl;
                 players.clear();
                 json j = json::parse(buffer);
                 DataType::JSONToPlayerClass(&players, j);
-
-
-                //std::cout << players[0].position.y << std::endl;
+                std::cout << "Player: \"" << players[0].name << "\" [" << players[0].position.x << ";" << players[0].position.y <<"]" << std::endl;
             }
 
             paramTries++;
@@ -371,8 +432,8 @@ void Network::runClient() {
             if(paramTries > text.capacity() - 1){
                 paramTries = 0;
 
-                //player1.position.y = std::sin(t) + 1;
-                //std::cout << player1.position.y << std::endl;
+                //players[0].position.y = std::sin(t) + 1;
+                //std::cout << players[0].position.y << std::endl;
 
 /*
             paramTries--;
@@ -388,6 +449,10 @@ void Network::runClient() {
             message += '#';
         }*/
 
+/*            if(t > 1000){
+                std::cout << "No further connexion" << std::endl;
+                break;
+            }*/
             //t += dt;
             frameTime -= deltaTime;
             t += deltaTime;
@@ -399,8 +464,8 @@ void Network::runClient() {
 
 void Network::sendToClient(int slot, const char *message, int length) {
     sendto(handle, (const char *)message, length,
-           0, (const struct sockaddr *) &m_clientAddress[slot].clientAddr,
-           sizeof(m_clientAddress[slot].clientAddr));
+           0, (sockaddr *) &m_clientAddress[slot].clientAddr,
+           sizeof(sockaddr_in));
 }
 
 void Network::onClientConnected(int _socket) {

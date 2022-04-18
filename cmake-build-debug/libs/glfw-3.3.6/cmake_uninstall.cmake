@@ -1,22 +1,22 @@
 
-if (NOT EXISTS "/home/tanguy/CLionProjects/Networking/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt")
-  message(FATAL_ERROR "Cannot find install manifest: \"/home/tanguy/CLionProjects/Networking/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt\"")
+if (NOT EXISTS "C:/Users/slaur/CLionProjects/UMONS-NETWORKING/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt")
+  message(FATAL_ERROR "Cannot find install manifest: \"C:/Users/slaur/CLionProjects/UMONS-NETWORKING/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt\"")
 endif()
 
-file(READ "/home/tanguy/CLionProjects/Networking/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt" files)
+file(READ "C:/Users/slaur/CLionProjects/UMONS-NETWORKING/cmake-build-debug/libs/glfw-3.3.6/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 
 foreach (file ${files})
   message(STATUS "Uninstalling \"$ENV{DESTDIR}${file}\"")
   if (EXISTS "$ENV{DESTDIR}${file}")
-    exec_program("/home/tanguy/Bureau/IntelliJSofwares/CLion/clion-2021.3.4/bin/cmake/linux/bin/cmake" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
+    exec_program("C:/Program Files/JetBrains/CLion 2021.1.3/bin/cmake/win/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
                  OUTPUT_VARIABLE rm_out
                  RETURN_VALUE rm_retval)
     if (NOT "${rm_retval}" STREQUAL 0)
       MESSAGE(FATAL_ERROR "Problem when removing \"$ENV{DESTDIR}${file}\"")
     endif()
   elseif (IS_SYMLINK "$ENV{DESTDIR}${file}")
-    EXEC_PROGRAM("/home/tanguy/Bureau/IntelliJSofwares/CLion/clion-2021.3.4/bin/cmake/linux/bin/cmake" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
+    EXEC_PROGRAM("C:/Program Files/JetBrains/CLion 2021.1.3/bin/cmake/win/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
                  OUTPUT_VARIABLE rm_out
                  RETURN_VALUE rm_retval)
     if (NOT "${rm_retval}" STREQUAL 0)

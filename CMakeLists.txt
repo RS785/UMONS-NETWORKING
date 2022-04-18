@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 project(Networking)
-add_executable(Networking main.cpp Network.cpp Network.h Address.cpp Address.h Logger.cpp Logger.h
-        Socket.cpp Socket.h libs/json.hpp Utils/PlayerClass.cpp Utils/PlayerClass.h Utils/Utils.h Utils/DataType.h main.cpp Window.cpp Window.h
-        libs/glad.h libs/glad.c libs/khrplatform.h)
 
 set(CMAKE_CXX_STANDARD 17)
+add_executable(Networking main.cpp Network.cpp Network.h Address.cpp Address.h Logger.cpp Logger.h
+        Socket.cpp Socket.h libs/json.hpp Utils/PlayerClass.cpp Utils/PlayerClass.h Utils/Utils.h Utils/DataType.h main.cpp Window.cpp Window.h tsqueue.h net_connection.h
+        libs/glad.h libs/glad.c libs/khrplatform.h net_client.h net_server.h net_message.h)
+
 
 include_directories(libs)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -18,6 +19,8 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(libs/glfw-3.3.6)
 target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} glfw)
+
+include_directories(libs/glm-master)
 
 include_directories(libs/glfw-3.3.6)
 target_include_directories(${PROJECT_NAME} PUBLIC libs/glfw-3.3.6/include)

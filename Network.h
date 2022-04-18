@@ -1,37 +1,52 @@
+#pragma once
 #include <iostream>
 #include <cassert>
 #include "cstring"
 #include "Address.h"
 #include "unordered_map"
 #include "Socket.h"
+#include "net_server.h"
+#include "net_client.h"
+
 
 #ifndef NETWORKING_NETWORK_H
 #define NETWORKING_NETWORK_H
 
-#define PACKET_SEND_FREQ 30
+
+enum class CustomMsgTypes : uint32_t {
+    ServerAccept,
+    ServerDeny,
+    ServerPing,
+    MessageAll,
+    ServerMessage,
+};
 
 class Network {
 public:
     char buffer[MAXLINE];
-    std::unordered_map<int, Socket*> m_clients{};
+    std::unordered_map<uint32_t , Socket*> m_clients{}; // UINT32T => PLAYER ID || PLAYER INFO
 
     struct sockaddr_in serveraddr, claddr;
     struct sockaddr_in clients[MAX_CLIENTS]{};
     int handle;
 
     Address m_clientAddress[MAX_CLIENTS];
-    bool m_clientConnected[MAX_CLIENTS];
-    uint numClients = 0;
+    bool m_clientConnected[MAX_CLIENTS]{false};
+    uint32_t numClients = 0;
 
     void init();;
     int findFreeSlot();
     int FindExistingClientIndex(const Address & address) const;
+    bool InitializeSockets();
     void ShutdownSockets();
+public:
+    bool sendTestData = false;
 
     int inboundSocket();
 
     [[noreturn]] void runServer();
-    void runClient();
+
+    [[noreturn]] void runClient();
 
 
 protected:

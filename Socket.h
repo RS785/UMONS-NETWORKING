@@ -21,11 +21,8 @@
 #include "sys/socket.h"
 #include "netinet/in.h"
 #include "fcntl.h"
+#include <unistd.h>
 
-#endif
-
-#if PLATFORM == PLATFORM_WINDOWS
-#pragma comment( lib, "wsock32.lib" )
 #endif
 
 #define assertm(exp, msg) assert(((void)msg, exp))
